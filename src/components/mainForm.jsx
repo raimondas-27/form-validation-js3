@@ -9,7 +9,7 @@ class MainForm extends Component {
          email: "",
          password: "",
          rPassword: "",
-         agreement: "",
+         agreement: false,
       },
       errors: {},
    }
@@ -19,31 +19,38 @@ class MainForm extends Component {
       email: Joi.string().email({minDomainSegments: 2}).required(),
       password: Joi.string().min(4).regex(/^[a-zA-Z0-9]{3,30}$/),
       rPassword: Joi.ref("password"),
-      agreement: Joi.boolean().required(),
+      agreement: Joi.boolean().required().invalid(false)
    }
 
    handleSubmit = (event) => {
       event.preventDefault();
       this.setState({errors: {}});
+      this.resetErrors();
       this.validateForm()
    }
 
-   handleChange = (event) => {
-      const {name,value} = event.target;
-      this.setState({account: {...this.state.account, [name]: value}})
-      this.validateProperty(name,value);
+   resetErrors() {
+      this.setState({errors: {}})
+      if(this.state.account.agreement === false) {
+         this.setState({account : {...this.state.account, agreement : ""}})
+      }
    }
 
-   validateProperty = (name,value) => {
-      console.log(name,value)
+   handleChange = (event) => {
+      const {name, value} = event.target;
+      this.setState({account: {...this.state.account, [name]: value}})
+      this.validateProperty(name, value);
+   }
+
+   validateProperty = (name, value) => {
+      console.log(name, value)
       const obj = {[name]: value};
-      const schema = {[name] : this.schema[name]};
+      const schema = {[name]: this.schema[name]};
       const result = Joi.validate(obj, schema);
       if (result.error) {
-         this.setState({errors: {...this.state.errors, [name] : result.error.details[0].message}})
-      }
-      else {
-         this.setState({errors: {...this.state.errors,[name] : "" }})
+         this.setState({errors: {...this.state.errors, [name]: result.error.details[0].message}})
+      } else {
+         this.setState({errors: {...this.state.errors, [name]: ""}})
       }
    }
 
@@ -53,19 +60,19 @@ class MainForm extends Component {
 
 
    validateForm = () => {
-      const result = Joi.validate(this.state.account, this.schema, {abortEarly : false})
+      const result = Joi.validate(this.state.account, this.schema, {abortEarly: false})
       console.log(result);
 
-      if(!result.error) {
+      if (!result.error) {
          return;
       }
       const errors = {};
       // errors.username = result.error.details
-      for(let item of result.error.details) {
+      for (let item of result.error.details) {
          errors[item.path[0]] = item.message;
       }
       console.log(errors)
-      this.setState({errors : errors})
+      this.setState({errors: errors})
 
 
       // if (this.state.account.username === "") {
@@ -76,6 +83,7 @@ class MainForm extends Component {
       //    this.setState({errors : {username : "at least 3 letters"}})
       // }
    }
+
 
    render() {
       return (
