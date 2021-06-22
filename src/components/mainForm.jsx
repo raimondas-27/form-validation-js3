@@ -16,23 +16,35 @@ class MainForm extends Component {
 
    schema = {
       username: Joi.string().min(3).required(),
-      email: Joi.string().email().required(),
+      email: Joi.string().email({minDomainSegments: 2}).required(),
       password: Joi.string().min(4).regex(/^[a-zA-Z0-9]{3,30}$/),
       rPassword: Joi.ref("password"),
       agreement: Joi.boolean().required(),
-
    }
 
    handleSubmit = (event) => {
       event.preventDefault();
-      console.log("paspausta");
       this.setState({errors: {}});
       this.validateForm()
    }
 
    handleChange = (event) => {
-      console.log(event)
-      this.setState({account: {...this.state.account, [event.target.name]: event.target.value}})
+      const {name,value} = event.target;
+      this.setState({account: {...this.state.account, [name]: value}})
+      this.validateProperty(name,value);
+   }
+
+   validateProperty = (name,value) => {
+      console.log(name,value)
+      const obj = {[name]: value};
+      const schema = {[name] : this.schema[name]};
+      const result = Joi.validate(obj, schema);
+      if (result.error) {
+         this.setState({errors: {...this.state.errors, [name] : result.error.details[0].message}})
+      }
+      else {
+         this.setState({errors: {...this.state.errors,[name] : "" }})
+      }
    }
 
    handleChecked = (event) => {
@@ -43,6 +55,19 @@ class MainForm extends Component {
    validateForm = () => {
       const result = Joi.validate(this.state.account, this.schema, {abortEarly : false})
       console.log(result);
+
+      if(!result.error) {
+         return;
+      }
+      const errors = {};
+      // errors.username = result.error.details
+      for(let item of result.error.details) {
+         errors[item.path[0]] = item.message;
+      }
+      console.log(errors)
+      this.setState({errors : errors})
+
+
       // if (this.state.account.username === "") {
       //    this.setState({errors : {username : "cant be blank"}})
       //    return;
@@ -67,14 +92,29 @@ class MainForm extends Component {
                 {this.state.errors.username && <p className="error-msg">{this.state.errors.username}</p>}
 
                 <label htmlFor="email"> email: </label>
-                <input value={this.state.email} onChange={this.handleChange} className="input" type="text" id="email"
+                <input value={this.state.email}
+                       onChange={this.handleChange}
+                       className={"input" + (this.state.errors.email && "is-invalid")}
+                       type="text"
+                       id="email"
                        name="email"/>
+                {this.state.errors.email && <p className="error-msg">{this.state.errors.email}</p>}
                 <label htmlFor="password">Password:</label>
-                <input value={this.state.password} onChange={this.handleChange} className="input" type="text"
-                       id="password" name="password"/>
+                <input value={this.state.password}
+                       onChange={this.handleChange}
+                       className={"input" + (this.state.errors.password && "is-invalid")}
+                       type="text"
+                       id="password"
+                       name="password"/>
+                {this.state.errors.password && <p className="error-msg">{this.state.errors.password}</p>}
                 <label htmlFor="rPassword">Repeat Password:</label>
-                <input value={this.state.rPassword} onChange={this.handleChange} className="input" type="text"
-                       id="rPassword" name="rPassword"/>
+                <input value={this.state.rPassword}
+                       onChange={this.handleChange}
+                       className={"input" + (this.state.errors.rPassword && "is-invalid")}
+                       type="text"
+                       id="rPassword"
+                       name="rPassword"/>
+                {this.state.errors.rPassword && <p className="error-msg">{this.state.errors.rPassword}</p>}
                 <div className="check-group">
                    <input
                        onChange={this.handleChecked}
@@ -85,6 +125,7 @@ class MainForm extends Component {
                    />
                    <label htmlFor="agreement">Agree?</label>
                 </div>
+                {this.state.errors.agreement && <p className="error-msg">{this.state.errors.agreement}</p>}
                 <button> Submit form</button>
              </form>
           </div>
