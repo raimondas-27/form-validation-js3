@@ -1,4 +1,5 @@
 import React, {Component} from 'react';
+import Joi from "joi-browser";
 
 
 class MainForm extends Component {
@@ -10,9 +11,16 @@ class MainForm extends Component {
          rPassword: "",
          agreement: "",
       },
-      errors: {
+      errors: {},
+   }
 
-      },
+   schema = {
+      username: Joi.string().min(3).required(),
+      email: Joi.string().email().required(),
+      password: Joi.string().min(4).regex(/^[a-zA-Z0-9]{3,30}$/),
+      rPassword: Joi.ref("password"),
+      agreement: Joi.boolean().required(),
+
    }
 
    handleSubmit = (event) => {
@@ -31,14 +39,17 @@ class MainForm extends Component {
       this.setState({account: {...this.state.account, agreement: event.target.checked}})
    }
 
+
    validateForm = () => {
-      if (this.state.account.username === "") {
-         this.setState({errors : {username : "cant be blank"}})
-         return;
-      }
-      if (this.state.account.username.length <=3) {
-         this.setState({errors : {username : "at least 3 letters"}})
-      }
+      const result = Joi.validate(this.state.account, this.schema, {abortEarly : false})
+      console.log(result);
+      // if (this.state.account.username === "") {
+      //    this.setState({errors : {username : "cant be blank"}})
+      //    return;
+      // }
+      // if (this.state.account.username.length <=3) {
+      //    this.setState({errors : {username : "at least 3 letters"}})
+      // }
    }
 
    render() {
